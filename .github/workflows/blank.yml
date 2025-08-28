@@ -1,7 +1,3 @@
-name: CI Pipeline
-
-on:
-  push:
 name: CI/CD Pipeline
 
 on:
