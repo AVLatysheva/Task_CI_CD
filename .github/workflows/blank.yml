@@ -1,16 +1,28 @@
-jobs:
-stages:          # List of stages for jobs, and their order of execution
-  - demo
+name: CI Pipeline
 
-hello-ci:
-  stage: demo
-  image: alpine:3.20
-  script: |
-    - echo "Repo :    ${CI_PROJECT_PATH}"
-    - echo "Branch :  ${CI_COMMIT_REF_NAME}"
-    - echo "Commit :  ${CI_COMMIT_SHORT_SHA}"
-    - echo "By :      ${GITLAB_USER_LOGIN}"  # Исправлено имя переменной
-    - date
-    - printf "Hello from gitlab ci\n" > hello.txt
-    artifacts:
-      expire_in: 1 day
+on: # Определяем, когда запускать workflow
+  push:
+    branches: [ main ]
+
+jobs: # Обязательный корневой элемент для GitHub Actions
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Run script
+        run: |
+          echo "Repo: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
+          date
+          printf "Hello from GitHub Actions\n" > hello.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: hello-file
+          path: hello.txt
+          retention-days: 1
