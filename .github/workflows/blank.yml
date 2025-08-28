@@ -1,108 +1,36 @@
-name: CI/CD Pipeline
+stages:
+  - stage_build
+  - stage_test
+  - stage_deploy_dev
+  - stage_deploy_prd
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
-env:
+variables:
   OWNER_NAME: "Leonid Badeev"
   CICD_VERSION: "v1.0"
   LOG_FILE_NAME: "log.txt"
 
-jobs:
-  # Stage 1: Build
-  build_job:
-    runs-on: ubuntu-latest
-    name: Build Stage
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        
-      - name: Create log file
-        run: |
-          echo "---Build Started---" > ${{ env.LOG_FILE_NAME }}
-          echo "Owner: ${{ env.OWNER_NAME }}" >> ${{ env.LOG_FILE_NAME }}
-          echo "Ver: ${{ env.CICD_VERSION }}" >> ${{ env.LOG_FILE_NAME }}
-          echo "Building..." >> ${{ env.LOG_FILE_NAME }}
-          echo "---Build Completed---" >> ${{ env.LOG_FILE_NAME }}
-          echo "=== log after Build ==="
-          wc -c ${{ env.LOG_FILE_NAME }} | awk '{print "size(bytes):",$1}'
-          cat -n ${{ env.LOG_FILE_NAME }}
-          
-      - name: Upload initial log artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: main-log
-          path: ${{ env.LOG_FILE_NAME }}
-          retention-days: 7
+# 0) Глобальный базовый образ для ВСЕХ job
+image: registry.gitlab.com/gitlab-org/cloud-deploy/aws-base:latest
 
-  # Stage 2: Test 1
-  test_job1:
-    runs-on: ubuntu-latest
-    needs: build_job
-    name: Test Stage 1
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        
-      - name: Download log artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: main-log
-          path: ./
-          
-      - name: Run test 1
-        run: |
-          test -f ${{ env.LOG_FILE_NAME }}
-          echo "---Test1 Started---" >> ${{ env.LOG_FILE_NAME }}
-          echo "Testing1..." >> ${{ env.LOG_FILE_NAME }}
-          echo "---Test1 Completed---" >> ${{ env.LOG_FILE_NAME }}
-          echo "=== log after Test1 ==="
-          wc -c ${{ env.LOG_FILE_NAME }} | awk '{print "size(bytes):",$1}'
-          cat -n ${{ env.LOG_FILE_NAME }}
-          
-      - name: Upload updated log
-        uses: actions/upload-artifact@v4
-        with:
-          name: main-log
-          path: ${{ env.LOG_FILE_NAME }}
-          retention-days: 7
+# 0.1) Дефолтные артефакты: сохраняем лог после КАЖДОЙ job
+# Важно: в большинстве версий GitLab переменные внутри artifacts.paths НЕ разворачиваются.
+# Поэтому используем прямой путь "log.txt".
+default:
+  artifacts:
+    paths:
+      - "log.txt"
+    expire_in: "1 week"
+    when: always
 
-  # Stage 2: Test 2
-  test_job2:
-    runs-on: ubuntu-latest
-    needs: test_job1
-    name: Test Stage 2
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        
-      - name: Download log artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: main-log
-          path: ./
-          
-      - name: Run test 2
-        run: |
-          test -f ${{ env.LOG_FILE_NAME }}
-          echo "---Test2 Started---" >> ${{ env.LOG_FILE_NAME }}
-          echo "Testing2..." >> ${{ env.LOG_FILE_NAME }}
-          echo "---Test2 Completed---" >> ${{ env.LOG_FILE_NAME }}
-          echo "=== log after Test2 ==="
-          wc -c ${{ env.LOG_FILE_NAME }} | awk '{print "size(bytes):",$1}'
-          cat -n ${{ env.LOG_FILE_NAME }}
-          
-      - name: Upload updated log
-        uses: actions/upload-artifact@v4
-        with:
-          name: main-log
-          path: ${{ env.LOG_FILE_NAME }}
-          retention-days: 7
+# 1) Build — создаёт log.txt
+build_job:
+  stage: stage_build
+  script: |
+    echo "---Build Started---"        | tee    "${LOG_FILE_NAME}"
+    echo "Owner:  ${OWNER_NAME}"      | tee -a "${LOG_FILE_NAME}"
+    echo "Ver:    ${CICD_VERSION}"    | tee -a "${LOG_FILE_NAME}"
+    echo "Building..."                | tee -a "${LOG_FILE_NAME}"
+    echo "---Build Completed---"      | tee -a "${LOG_FILE_NAME}"
+    echo "=== log after Build ==="
+    wc -c "${LOG_FILE_NAME}" | awk '{print "size(bytes):",$1}'
+    cat -n "${LOG_FILE_NAME}"
