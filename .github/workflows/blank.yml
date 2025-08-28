@@ -18,7 +18,7 @@ jobs:
           echo "Repo: ${{ github.repository }}"
           echo "Branch: ${{ github.ref_name }}"
           echo "Commit: ${{ github.sha }}"
-          echo "Author: ${{ github.actor }}"
+          echo "By: ${{ github.actor }}"
           date
           printf "Hello from GitHub Actions\n" > hello.txt
       
