@@ -9,7 +9,7 @@ on:
       - main
 
 env:
-  OWNER_NAME: "Belenko Angelica"
+  OWNER_NAME: "Leonid Badeev"
   CICD_VERSION: "v1.0"
   LOG_FILE_NAME: "log.txt"
 
@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
+      
       - name: Create log file
         run: |
           echo "---Build Started---" > ${{ env.LOG_FILE_NAME }}
@@ -33,11 +33,11 @@ jobs:
           echo "=== log after Build ==="
           wc -c ${{ env.LOG_FILE_NAME }} | awk '{print "size(bytes):",$1}'
           cat -n ${{ env.LOG_FILE_NAME }}
-          
-      - name: Upload log artifact
+      
+      - name: Upload build log artifact
         uses: actions/upload-artifact@v4
         with:
-          name: log-file
+          name: build-log
           path: ${{ env.LOG_FILE_NAME }}
           retention-days: 7
 
@@ -50,13 +50,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
-      - name: Download log artifact
+      
+      - name: Download build log artifact
         uses: actions/download-artifact@v4
         with:
-          name: log-file
+          name: build-log
           path: ./
-          
+      
       - name: Run test 1
         run: |
           test -f ${{ env.LOG_FILE_NAME }}
@@ -66,11 +66,11 @@ jobs:
           echo "=== log after Test1 ==="
           wc -c ${{ env.LOG_FILE_NAME }} | awk '{print "size(bytes):",$1}'
           cat -n ${{ env.LOG_FILE_NAME }}
-          
-      - name: Upload updated log
+      
+      - name: Upload test1 log artifact
         uses: actions/upload-artifact@v4
         with:
-          name: log-file
+          name: test1-log
           path: ${{ env.LOG_FILE_NAME }}
           retention-days: 7
 
@@ -83,27 +83,26 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
-      - name: Download log artifact
-        uses: actions/download-artifact@v3
+      
+      - name: Download test1 log artifact
+        uses: actions/download-artifact@v4
         with:
-          name: log-file
+          name: test1-log
           path: ./
-          
+      
       - name: Run test 2
         run: |
           test -f ${{ env.LOG_FILE_NAME }}
           echo "---Test2 Started---" >> ${{ env.LOG_FILE_NAME }}
           echo "Testing2..." >> ${{ env.LOG_FILE_NAME }}
-          # test -f "__THIS_FILE_DOES_NOT_EXIST__.txt" || { echo "Missing demo file -> failing"; exit 1; }
           echo "---Test2 Completed---" >> ${{ env.LOG_FILE_NAME }}
           echo "=== log after Test2 ==="
           wc -c ${{ env.LOG_FILE_NAME }} | awk '{print "size(bytes):",$1}'
           cat -n ${{ env.LOG_FILE_NAME }}
-          
-      - name: Upload updated log
+      
+      - name: Upload test2 log artifact
         uses: actions/upload-artifact@v4
         with:
-          name: log-file
+          name: test2-log
           path: ${{ env.LOG_FILE_NAME }}
           retention-days: 7
